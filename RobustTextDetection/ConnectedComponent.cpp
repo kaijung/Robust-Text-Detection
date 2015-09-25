@@ -153,7 +153,7 @@ Mat ConnectedComponent::apply( const Mat& image ) {
     
     
     /* By default, sort the properties from the area size in descending order */
-    sort( properties.begin(), properties.end(), [=](ComponentProperty& a, ComponentProperty& b){
+    sort( properties.begin(), properties.end(), [=](const ComponentProperty& a,const ComponentProperty& b)  {
         return a.area > b.area;
     });
     

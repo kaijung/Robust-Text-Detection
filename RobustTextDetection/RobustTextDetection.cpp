@@ -5,7 +5,7 @@
 //  Created by Saburo Okita on 08/06/14.
 //  Copyright (c) 2014 Saburo Okita. All rights reserved.
 //
-
+#include <bitset>
 #include "RobustTextDetection.h"
 #include "ConnectedComponent.h"
 
@@ -394,5 +394,3 @@ Mat RobustTextDetection::computeStrokeWidth( Mat& dist ) {
     
     return Mat( padded, Rect(1, 1, dist.cols, dist.rows) );
 }
-
-
