@@ -24,9 +24,20 @@ int main(int argc, const char * argv[])
 
     namedWindow( "" );
     moveWindow("", 0, 0);
-    
-    Mat image = imread( "/Users/saburookita/Personal Projects/RobustTextDetection/TestText.png" );
-    
+/*
+	char StringTmp[1024];
+	sprintf(StringTmp,argv[1]);
+		*/
+    //Mat image = imread( "TestText.png" );
+    if(argc<2)
+			return 0;
+	Mat image = imread( argv[1] );	
+	//printf("dddddddddddddddddddd\n");
+	//printf("%s\n",argv[1]);
+	//imwrite( "aaa.jpg", image );
+	//imshow( "TestText", image );
+	//waitKey(0);
+		
     /* Quite a handful or params */
     RobustTextParam param;
     param.minMSERArea        = 10;
@@ -45,14 +56,14 @@ int main(int argc, const char * argv[])
     
     /* Apply Robust Text Detection */
     /* ... remove this temp output path if you don't want it to write temp image files */
-    string temp_output_path = "/Users/saburookita/Personal Projects/RobustTextDetection/";
+    string temp_output_path = "";//"/Users/saburookita/Personal Projects/RobustTextDetection/";
     RobustTextDetection detector(param, temp_output_path );
     pair<Mat, Rect> result = detector.apply( image );
     
     /* Get the region where the candidate text is */
     Mat stroke_width( result.second.height, result.second.width, CV_8UC1, Scalar(0) );
     Mat(result.first, result.second).copyTo( stroke_width);
-    
+ 
     
     /* Use Tesseract to try to decipher our image */
     tesseract::TessBaseAPI tesseract_api;
@@ -60,7 +71,10 @@ int main(int argc, const char * argv[])
     tesseract_api.SetImage((uchar*) stroke_width.data, stroke_width.cols, stroke_width.rows, 1, stroke_width.cols);
     
     string out = string(tesseract_api.GetUTF8Text());
+	cout << out;	
 
+	//waitKey(0);
+#if 0   
     /* Split the string by whitespace */
     vector<string> splitted;
     istringstream iss( out );
@@ -84,6 +98,6 @@ int main(int argc, const char * argv[])
     
     imshow("", appended );
     waitKey();
-    
+#endif    
     return 0;
 }
