@@ -44,7 +44,7 @@ pair<Mat, Rect> RobustTextDetection::apply( Mat& image ) {
     
     /* Writing temporary output images */
     if( !tempImageDirectory.empty() ) {
-        cout << "Writing temp output images" << endl;
+        //cout << "Writing temp output images" << endl;
         imwrite( tempImageDirectory + "/out_grey.png",                   grey );
         imwrite( tempImageDirectory + "/out_mser_mask.png",              mser_mask );
         imwrite( tempImageDirectory + "/out_canny_edges.png",            edges );
