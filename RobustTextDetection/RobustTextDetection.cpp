@@ -138,9 +138,9 @@ pair<Mat, Rect> RobustTextDetection::apply( Mat& image ) {
     
     
     /* Well, discard everything outside of the bounding rectangle */
-    filtered_stroke_width.copyTo( filtered_stroke_width, bounding_mask );
+    grey.copyTo( filtered_stroke_width, bounding_mask );
     
-    return pair<Mat, Rect>( grey, bounding_rect );
+    return pair<Mat, Rect>( filtered_stroke_width, bounding_rect );
 }
 
 
