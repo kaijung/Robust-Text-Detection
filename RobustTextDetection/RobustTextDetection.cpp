@@ -140,7 +140,7 @@ pair<Mat, Rect> RobustTextDetection::apply( Mat& image ) {
     /* Well, discard everything outside of the bounding rectangle */
     filtered_stroke_width.copyTo( filtered_stroke_width, bounding_mask );
     
-    return pair<Mat, Rect>( filtered_stroke_width, bounding_rect );
+    return pair<Mat, Rect>( grey, bounding_rect );
 }
 
 
@@ -211,10 +211,21 @@ int RobustTextDetection::toBin( const float angle, const int neighbors ) {
  */
 Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
     CV_Assert( edges.type() == CV_8UC1 );
-    
+ 
+   Mat delta = image.clone();
+
+    for( int y = 0; y < delta.rows; y++ ) {
+        uchar * img_ptr = delta.ptr<uchar>(y);
+        for( int x = 0; x < delta.cols; x++ ) {
+            img_ptr[x] = abs(img_ptr[x]-128);
+        }
+    }
+
+    imwrite( tempImageDirectory + "/out_grey_delta.png",                   delta );
+
     Mat grad_x, grad_y;
-    Sobel( image, grad_x, CV_32FC1, 1, 0 );
-    Sobel( image, grad_y, CV_32FC1, 0, 1 );
+    Sobel( delta, grad_x, CV_32FC1, 1, 0 );
+    Sobel( delta, grad_y, CV_32FC1, 0, 1 );
     
     Mat grad_mag, grad_dir;
     cartToPolar( grad_x, grad_y, grad_mag, grad_dir, true );
