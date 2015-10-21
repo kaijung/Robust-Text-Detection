@@ -5,7 +5,7 @@
 
 OSNAME=centos5
 
-#DEFINES=-D_PRODUCTION
+DEFINES=-D_GETFONTDIR_EN -D_GROW_PLUS_EN
 
 
 TARGET=rb
@@ -22,7 +22,7 @@ RM=rm
 CFLAGS=-Wall -g  -std=gnu++11
 #LDFLAGS=-lpthread -shared -fPIC
 LDFLAGS=-llept -ltesseract `pkg-config --static --cflags --libs opencv`
-OBJS=ConnectedComponent.o RobustTextDetection.o main.o
+OBJS=mser.o ConnectedComponent.o RobustTextDetection.o main.o
 
 
 .SUFFIXES:	.cpp
