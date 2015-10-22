@@ -63,6 +63,8 @@ int main(int argc, const char * argv[])
     /* Get the region where the candidate text is */
     Mat stroke_width( result.second.height, result.second.width, CV_8UC1, Scalar(0) );
     Mat(result.first, result.second).copyTo( stroke_width);
+
+	imwrite("zzz_stroke_width.bmp",stroke_width);
  
     
     /* Use Tesseract to try to decipher our image */
