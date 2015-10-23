@@ -82,14 +82,21 @@ void get_middle_process_img_end(void)
 	mser_middle_process_img_2.release();	
 }
 
+
 //利用MSER產生的中間影像來判斷是否該反向
 //只寫入只有一邊有的，同時兩邊都有的不作用
+//0：不改變
+//1：顛倒方向
+//-1：跳過
 int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 {
-	if(point_gray_pixel(image2,curr_x,curr_y)>0)
+
+	if((point_gray_pixel(image2,curr_x,curr_y)>0)&&(point_gray_pixel(image1,curr_x,curr_y)>0)) 
+		return -1;
+	else if(point_gray_pixel(image2,curr_x,curr_y)>0)
 		return 1;
-	//if((point_gray_pixel(image2,curr_x,curr_y)>0)&&(point_gray_pixel(image1,curr_x,curr_y)>0)) 
-	//	return 1;
+	else if(point_gray_pixel(image1,curr_x,curr_y)>0)
+		return 1;
 
 	return 0;
 }
@@ -1028,7 +1035,7 @@ Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
 		                    case 8: next_ptr[x-1] = 255; break;
 		                    default: break;
 		                }
-				}else{
+				}else if(flag==1){
 		                switch( grad_ptr[x] ) {	
 		                    case 1: curr_ptr[x+1] = 255; break;
 		                    case 2: next_ptr[x+1] = 255; break;
@@ -1040,6 +1047,8 @@ Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
 		                    case 8: prev_ptr[x+1] = 255; break;
 		                    default: break;
 		                }
+				}else{//flag==-1
+					continue;
 				}
             }
         }
