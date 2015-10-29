@@ -40,14 +40,16 @@ int main(int argc, const char * argv[])
 		
     /* Quite a handful or params */
     RobustTextParam param;
+
     param.minMSERArea        = 10;
     param.maxMSERArea        = 2000;
+
     param.cannyThresh1       = 20;
     param.cannyThresh2       = 100;
     
     param.maxConnCompCount   = 3000;
-    param.minConnCompArea    = 75;
-    param.maxConnCompArea    = 600;
+    param.minConnCompArea    = 200;//75;
+    param.maxConnCompArea    = 2000;//600;
     
     param.minEccentricity    = 0.1;
     param.maxEccentricity    = 0.995;
