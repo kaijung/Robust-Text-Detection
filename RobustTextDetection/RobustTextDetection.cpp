@@ -102,6 +102,135 @@ int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 }
 
 
+
+//給方向、起始點和強度開始做區域擴散
+//input dir edge_level start_xy image
+//dir_flag_inv代表顛倒原來方向
+/* Convert the angle into predefined 3x3 neighbor locations
+	| 2 | 3 | 4 |
+	| 1 | 0 | 5 |
+	| 8 | 7 | 6 |
+*/
+void canny_edge_growing_clear(int dir,int dir_flag_inv,uchar curr_edge_level,Mat &image,int start_x,int start_y)
+{
+		float curr_edge_level_x_gain=(float)curr_edge_level/25*1.0;
+		int edge_level=curr_edge_level_x_gain+0.5;
+/*
+		if(edge_level<1)
+			edge_level=1;
+		else if(edge_level>10)
+			edge_level=10; 
+		*/
+		edge_level=3;
+
+		
+//printf("%d ",edge_level);
+		//edge_level=bound(edge_level,0,3);
+		int curr_x=0,curr_y=0;
+		int true_dir=0;//根據flag改成正確方向
+		true_dir=dir;
+
+		if(dir<0)//小於0則不處理
+			return;
+
+		if(dir_flag_inv)
+		{
+			if(dir==1)
+			{
+				true_dir=5;
+			}else if(dir==2)
+			{
+				true_dir=6;
+			}else if(dir==3)
+			{
+				true_dir=7;
+			}else if(dir==4)
+			{
+				true_dir=8;
+			}else if(dir==5)
+			{
+				true_dir=1;
+			}else if(dir==6)
+			{
+				true_dir=2;
+			}else if(dir==7)
+			{
+				true_dir=3;
+			}else if(dir==8)
+			{
+				true_dir=4;
+			}
+		}
+
+
+
+	    /*
+	     | 2 | 3 | 4 |
+	     | 1 | 0 | 5 |
+	     | 8 | 7 | 6 |
+	     */
+		int loop_count=0;
+		while(1)
+		{
+			if(loop_count>=edge_level)
+				return;
+
+			if(true_dir==1)
+			{
+
+				curr_x=start_x-(loop_count+1);
+				curr_y=start_y;
+			}else if(true_dir==2)
+			{
+				curr_x=start_x-(loop_count+1);
+				curr_y=start_y-(loop_count+1);
+			}else if(true_dir==3)
+			{
+				curr_x=start_x;
+				curr_y=start_y-(loop_count+1);
+			}else if(true_dir==4)
+			{
+				curr_x=start_x+(loop_count+1);
+				curr_y=start_y-(loop_count+1);
+			}else if(true_dir==5)
+			{
+				curr_x=start_x+(loop_count+1);
+				curr_y=start_y;
+			}else if(true_dir==6)
+			{
+				curr_x=start_x+(loop_count+1);
+				curr_y=start_y+(loop_count+1);
+			}else if(true_dir==7)
+			{
+				curr_x=start_x;
+				curr_y=start_y+(loop_count+1);
+			}else if(true_dir==8)
+			{
+				curr_x=start_x-(loop_count+1);
+				curr_y=start_y+(loop_count+1);
+			}
+
+			if(curr_x<0)
+				break;
+			else if(curr_y<0)
+				break;
+			else if(curr_x>=image.cols)
+				break;
+			else if(curr_y>=image.rows)
+				break;
+
+			//image.at<uchar>(curr_y,curr_x)=255;
+			point_gray_pixel(image,curr_x,curr_y)=255;
+
+
+			loop_count++;
+		}
+
+
+
+}
+
+
 struct MSERParams
 {
     MSERParams( int _delta, int _minArea, int _maxArea, double _maxVariation,
@@ -683,7 +812,7 @@ extractMSER( CvArr* _img,
 
 void MSER::operator()( const Mat& image, vector<vector<Point> >& dstcontours, const Mat& mask ) const
 {
-printf("dddd");
+
     CvMat _image = image, _mask, *pmask = 0;
     if( mask.data )
         pmask = &(_mask = mask);
@@ -697,7 +826,7 @@ printf("dddd");
     size_t i, ncontours = contours.size();
     dstcontours.resize(ncontours);
     for( i = 0; i < ncontours; i++, ++it )
-        Seq<Point>(*it).copyTo(dstcontours[i]);
+        Seq<Point>(*it).copyTo(dstcontours[i]); 
 		/**/
 }
 #endif
@@ -1033,6 +1162,13 @@ Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
             if( edge_ptr[x] != 0 ) {
                 /* .. there should be a better way .... */
 				int flag=get_mser_middle_process_flag(mser_middle_process_img_1,mser_middle_process_img_2,x,y);
+
+#if 1
+					uchar curr_edge_level=point_gray_pixel(grad_mag,x,y);
+					canny_edge_growing_clear(grad_ptr[x],flag,curr_edge_level,result,x,y);
+
+#else	
+								
 				if(flag==0)
 				{
 		               switch( grad_ptr[x] ) {											
@@ -1061,6 +1197,8 @@ Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
 				}else{//flag==-1
 					continue;
 				}
+#endif
+				
             }
         }
 
