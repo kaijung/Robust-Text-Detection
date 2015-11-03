@@ -20,7 +20,7 @@ using namespace cv;
 
 #ifdef GET_MSER_REGION_DIR_EN
 
-//¬ö¿ımser¤¤¶¡³B²z¼v¹³
+//ç´€éŒ„mserä¸­é–“è™•ç†å½±åƒ
 Mat mser_middle_process_img_1,mser_middle_process_img_2;
 int mser_middle_process_img_color=0;
 void get_middle_process_img_start(int width,int height)
@@ -39,10 +39,10 @@ void get_middle_process_img_start(int width,int height)
 	
 }
 
-//pixel­È128¥Nªí darker to brighter (MSER-)
-//pixel­È255¥Nªí brighter to darker (MSER+)
-//¦pªG¬O0¥Nªí¨S¼g¤J¹L¡A¥i¥Hª½±µ¼g¤J­ş­Ó¤è¦V
-//¦pªG¤j©ó0¥Nªí¼g¤J¹L¡Aµ¹­È64¥Nªí­«Å|
+//pixelå€¼128ä»£è¡¨ darker to brighter (MSER-) mser_middle_process_img_1
+//pixelå€¼255ä»£è¡¨ brighter to darker (MSER+) mser_middle_process_img_2
+//å¦‚æœæ˜¯0ä»£è¡¨æ²’å¯«å…¥éï¼Œå¯ä»¥ç›´æ¥å¯«å…¥å“ªå€‹æ–¹å‘
+//å¦‚æœå¤§æ–¼0ä»£è¡¨å¯«å…¥éï¼Œçµ¦å€¼64ä»£è¡¨é‡ç–Š
 
 void get_middle_process_img_pix(int curr_x,int curr_y)
 {
@@ -83,11 +83,11 @@ void get_middle_process_img_end(void)
 }
 
 
-//§Q¥ÎMSER²£¥Íªº¤¤¶¡¼v¹³¨Ó§PÂ_¬O§_¸Ó¤Ï¦V
-//¥u¼g¤J¥u¦³¤@Ãä¦³ªº¡A¦P®É¨âÃä³£¦³ªº¤£§@¥Î
-//0¡G¤£§ïÅÜ
-//1¡GÄA­Ë¤è¦V
-//-1¡G¸õ¹L
+//åˆ©ç”¨MSERç”¢ç”Ÿçš„ä¸­é–“å½±åƒä¾†åˆ¤æ–·æ˜¯å¦è©²åå‘
+//åªå¯«å…¥åªæœ‰ä¸€é‚Šæœ‰çš„ï¼ŒåŒæ™‚å…©é‚Šéƒ½æœ‰çš„ä¸ä½œç”¨
+//0ï¼šä¸æ”¹è®Š
+//1ï¼šé¡›å€’æ–¹å‘
+//-1ï¼šè·³é
 int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 {
 
@@ -96,16 +96,16 @@ int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 	else if(point_gray_pixel(image2,curr_x,curr_y)>0)
 		return 1;
 	else if(point_gray_pixel(image1,curr_x,curr_y)>0)
-		return 1;
+		return 0;
 
 	return 0;
 }
 
 
 
-//µ¹¤è¦V¡B°_©lÂI©M±j«×¶}©l°µ°Ï°ìÂX´²
+//ÂµÂ¹Â¤Ã¨Â¦VÂ¡BÂ°_Â©lÃ‚IÂ©MÂ±jÂ«Ã—Â¶}Â©lÂ°ÂµÂ°ÃÂ°Ã¬Ã‚XÂ´Â²
 //input dir edge_level start_xy image
-//dir_flag_inv¥NªíÄA­Ë­ì¨Ó¤è¦V
+//dir_flag_invÂ¥NÂªÃ­Ã„AÂ­Ã‹Â­Ã¬Â¨Ã“Â¤Ã¨Â¦V
 /* Convert the angle into predefined 3x3 neighbor locations
 	| 2 | 3 | 4 |
 	| 1 | 0 | 5 |
@@ -113,24 +113,24 @@ int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 */
 void canny_edge_growing_clear(int dir,int dir_flag_inv,uchar curr_edge_level,Mat &image,int start_x,int start_y)
 {
-		float curr_edge_level_x_gain=(float)curr_edge_level/25*1.0;
-		int edge_level=curr_edge_level_x_gain+0.5;
+		float curr_edge_level_x_gain=(double)curr_edge_level/360.00*3.00;
+		int edge_level=(int)(3.00-curr_edge_level_x_gain);
 /*
 		if(edge_level<1)
 			edge_level=1;
 		else if(edge_level>10)
 			edge_level=10; 
 		*/
-		edge_level=3;
+		//edge_level=2;
 
 		
 //printf("%d ",edge_level);
 		//edge_level=bound(edge_level,0,3);
 		int curr_x=0,curr_y=0;
-		int true_dir=0;//®Ú¾Úflag§ï¦¨¥¿½T¤è¦V
+		int true_dir=0;//Â®ÃšÂ¾ÃšflagÂ§Ã¯Â¦Â¨Â¥Â¿Â½TÂ¤Ã¨Â¦V
 		true_dir=dir;
 
-		if(dir<0)//¤p©ó0«h¤£³B²z
+		if(dir<0)//Â¤pÂ©Ã³0Â«hÂ¤Â£Â³BÂ²z
 			return;
 
 		if(dir_flag_inv)
