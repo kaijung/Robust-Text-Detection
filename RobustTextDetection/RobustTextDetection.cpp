@@ -15,8 +15,18 @@ using namespace std;
 using namespace cv;
 
 #define point_gray_pixel(image,x,y) image.at<uchar>(y,x)
-#define GET_MSER_REGION_DIR_EN
+#define point_gray_pixel_F(image,x,y) image.at<float>(y,x)
 
+#define D3DX_PI    ((double)3.141592654)
+#define D3DXToRadian(degree) ((degree) * (D3DX_PI / 180.0f))
+#define D3DXToDegree(radian) ((radian) * (180.0f / D3DX_PI))
+#define eps 2.2204e-016
+
+
+
+
+#define GET_MSER_REGION_DIR_EN
+#define NO_Q_DIR_EN
 
 #ifdef GET_MSER_REGION_DIR_EN
 
@@ -1040,6 +1050,44 @@ int RobustTextDetection::toBin( const float angle, const int neighbors ) {
     return static_cast<int>( (( floor(angle / divisor)  - 1) / 2) + 1 ) % neighbors + 1;
 }
 
+#ifdef NO_Q_DIR_EN
+
+Mat Get_edge_growing_clear_mask(Mat &edge_image,Mat &grad_mag, Mat &grad_dir)
+{
+	int width=edge_image.cols,height=edge_image.rows;
+	Mat result_clear_mask;
+	result_clear_mask= Mat( Size(width,height), CV_8UC1, Scalar(0));
+
+	float shift_y=0,shift_x=0;
+	float curr_edge_mag=0,curr_angle=0;
+	for (int y = 0; y < edge_image.rows; y++) 
+	{
+	    for(int x = 0; x < edge_image.cols; x++) 
+		{
+				//if((x==208)&&(y==103))
+				//if((x==205)&&(y==146))
+					//int ggg=0;
+		
+				if(point_gray_pixel(edge_image,x,y))
+				{
+					curr_edge_mag=point_gray_pixel_F(grad_mag,x,y)/50;//5.0;
+					curr_angle=point_gray_pixel_F(grad_dir,x,y);
+					shift_y=curr_edge_mag*sin(D3DXToRadian(curr_angle));
+					shift_x=curr_edge_mag*cos(D3DXToRadian(curr_angle));
+					line(result_clear_mask,Point(x,y),Point(x+shift_x,y+shift_y),CV_RGB(255,255,255),1,CV_AA,0);
+					//circle( result_clear_mask, Point(x+shift_x,y+shift_y), 2, Scalar( 255, 0, 0 ), 1 );
+				}
+	    }
+	}
+
+	return result_clear_mask;
+}
+
+#endif
+
+
+
+
 /**
  * Grow the edges along with directon of gradient
  */
@@ -1085,7 +1133,14 @@ Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
 	
     Mat grad_mag, grad_dir;
     cartToPolar( grad_x, grad_y, grad_mag, grad_dir, true );
-    
+
+#ifdef NO_Q_DIR_EN
+	Mat result_clear_mask=Get_edge_growing_clear_mask(edges,grad_mag, grad_dir);
+	imwrite( "zzz_dir_image.bmp", result_clear_mask );
+	return result_clear_mask;
+#endif
+
+		
     
     /* Convert the angle into predefined 3x3 neighbor locations
      | 2 | 3 | 4 |
@@ -1109,7 +1164,7 @@ Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
     
     uchar * prev_ptr = result.ptr<uchar>(0);
     uchar * curr_ptr = result.ptr<uchar>(1);
-    
+    //return result;//no use groeing clear
 #ifndef GET_MSER_REGION_DIR_EN
     for( int y = 1; y < edges.rows - 1; y++ ) {
         uchar * edge_ptr = edges.ptr<uchar>(y);
