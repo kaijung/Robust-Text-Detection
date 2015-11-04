@@ -26,7 +26,7 @@ using namespace cv;
 
 
 #define GET_MSER_REGION_DIR_EN
-#define NO_Q_DIR_EN
+
 
 #ifdef GET_MSER_REGION_DIR_EN
 
