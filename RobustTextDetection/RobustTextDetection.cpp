@@ -1,4 +1,4 @@
-//
+ï»¿//
 //  RobustTextDetection.cpp
 //  RobustTextDetection
 //
@@ -27,12 +27,15 @@ using namespace cv;
 
 #define GET_MSER_REGION_DIR_EN
 #define NO_Q_DIR_EN
+#define MSER_FILTER
+
 
 #ifdef GET_MSER_REGION_DIR_EN
-
-//¬ö¿ımser¤¤¶¡³B²z¼v¹³
+//ç´€éŒ„mserä¸­é–“è™•ç†å½±åƒ
 Mat mser_middle_process_img_1,mser_middle_process_img_2;
 int mser_middle_process_img_color=0;
+
+
 void get_middle_process_img_start(int width,int height)
 {
 	mser_middle_process_img_1= Mat( Size(width,height), CV_8UC1, Scalar(0));
@@ -49,10 +52,10 @@ void get_middle_process_img_start(int width,int height)
 	
 }
 
-//pixel­È128¥Nªí darker to brighter (MSER-)
-//pixel­È255¥Nªí brighter to darker (MSER+)
-//¦pªG¬O0¥Nªí¨S¼g¤J¹L¡A¥i¥Hª½±µ¼g¤J­ş­Ó¤è¦V
-//¦pªG¤j©ó0¥Nªí¼g¤J¹L¡Aµ¹­È64¥Nªí­«Å|
+//pixelå€¼128ä»£è¡¨ darker to brighter (MSER-)
+//pixelå€¼255ä»£è¡¨ brighter to darker (MSER+)
+//å¦‚æœæ˜¯0ä»£è¡¨æ²’å¯«å…¥éï¼Œå¯ä»¥ç›´æ¥å¯«å…¥å“ªå€‹æ–¹å‘
+//å¦‚æœå¤§æ–¼0ä»£è¡¨å¯«å…¥éï¼Œçµ¦å€¼64ä»£è¡¨é‡ç–Š
 
 void get_middle_process_img_pix(int curr_x,int curr_y)
 {
@@ -92,11 +95,11 @@ void get_middle_process_img_end(void)
 	mser_middle_process_img_2.release();	
 }
 
-//§Q¥ÎMSER²£¥Íªº¤¤¶¡¼v¹³¨Ó§PÂ_¬O§_¸Ó¤Ï¦V
-//¥u¼g¤J¥u¦³¤@Ãä¦³ªº¡A¦P®É¨âÃä³£¦³ªº¤£§@¥Î
-//0¡G¤£§ïÅÜ  ¨Ì·Ó±è«×¤è¦Vgrowing
-//1¡GÄA­Ë¤è¦V
-//-1¡G¸õ¹L ­ì¥»edge´N¦³¤@ÂI
+//åˆ©ç”¨MSERç”¢ç”Ÿçš„ä¸­é–“å½±åƒä¾†åˆ¤æ–·æ˜¯å¦è©²åå‘
+//åªå¯«å…¥åªæœ‰ä¸€é‚Šæœ‰çš„ï¼ŒåŒæ™‚å…©é‚Šéƒ½æœ‰çš„ä¸ä½œç”¨
+//0ï¼šä¸æ”¹è®Š  ä¾ç…§æ¢¯åº¦æ–¹å‘growing
+//1ï¼šé¡›å€’æ–¹å‘
+//-1ï¼šè·³é åŸæœ¬edgeå°±æœ‰ä¸€é»
 int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 {
 /**/
@@ -116,9 +119,9 @@ int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 
 
 
-//µ¹¤è¦V¡B°_©lÂI©M±j«×¶}©l°µ°Ï°ìÂX´²
+//çµ¦æ–¹å‘ã€èµ·å§‹é»å’Œå¼·åº¦é–‹å§‹åšå€åŸŸæ“´æ•£
 //input dir edge_level start_xy image
-//dir_flag_inv¥NªíÄA­Ë­ì¨Ó¤è¦V
+//dir_flag_invä»£è¡¨é¡›å€’åŸä¾†æ–¹å‘
 /* Convert the angle into predefined 3x3 neighbor locations
 	| 2 | 3 | 4 |
 	| 1 | 0 | 5 |
@@ -140,10 +143,10 @@ void canny_edge_growing_clear(int dir,int dir_flag_inv,uchar curr_edge_level,Mat
 //printf("%d ",edge_level);
 		//edge_level=bound(edge_level,0,3);
 		int curr_x=0,curr_y=0;
-		int true_dir=0;//®Ú¾Úflag§ï¦¨¥¿½T¤è¦V
+		int true_dir=0;//æ ¹æ“šflagæ”¹æˆæ­£ç¢ºæ–¹å‘
 		true_dir=dir;
 
-		if(dir<0)//¤p©ó0«h¤£³B²z
+		if(dir<0)//å°æ–¼0å‰‡ä¸è™•ç†
 			return;
 
 		if(dir_flag_inv)
@@ -853,6 +856,106 @@ RobustTextDetection::RobustTextDetection(RobustTextParam & param, string temp_im
     this->param                 = param;
     this->tempImageDirectory    = temp_img_directory;
 }
+
+#ifdef MSER_FILTER
+void Copy_conn_region(Mat &image1,Mat &image2)
+{
+	uchar y_value=0;
+	for (int y = 0; y < image1.rows; y++) 
+	{
+	    for(int x = 0; x < image1.cols; x++) 
+			{
+				y_value=point_gray_pixel(image1,x,y);
+				if(y_value==128)
+				{
+					point_gray_pixel(image2,x,y)=255;
+				}
+
+
+	    }
+	}
+}
+void clr_conn_region(Mat &image)
+{
+	uchar y_value=0;
+	for (int y = 0; y < image.rows; y++) 
+	{
+	    for(int x = 0; x < image.cols; x++) 
+			{
+				y_value=point_gray_pixel(image,x,y);
+				if(y_value==128)
+				{
+					point_gray_pixel(image,x,y)=255;
+				}
+
+
+	    }
+	}
+}
+
+//çµ¦å…©å¼µMSERçš„å½±åƒï¼Œç”¨éæ¿¾é€£é€šé¢ç©å¤ªå°çš„æ–¹å¼å»é™¤æ‰
+//pixelå€¼ç´€éŒ„å€åŸŸçš„ç·¨è™Ÿ å°æ–¼0ä»£è¡¨è¦å»é™¤çš„å€åŸŸ
+void MSER_filter_main(Mat &image,Mat &out_image)
+{
+	#define MSER_AREA_TH 1000
+	//Mat out_image;
+
+	const long area_min=10;
+	const long area_max=10;	
+	//out_image= Mat( Size(width,height), CV_8UC1, Scalar(0));
+
+Mat img_buf;
+img_buf= image.clone();
+
+//imwrite( "img_buf.bmp", img_buf );
+
+//floodFill(img_buf, Point(95 ,137),Scalar(128));
+
+
+
+
+
+
+/**/
+	uchar y_value=0;
+	for (int y = 0; y < img_buf.rows; y++) {
+	    for(int x = 0; x < img_buf.cols; x++) {
+			y_value=point_gray_pixel(img_buf,x,y);
+			if(y_value==0)
+			{
+				long area_count=floodFill(img_buf, Point(x,y),Scalar(128));
+
+//imwrite( "img_buf1.bmp", img_buf );
+				
+				if(area_count<MSER_AREA_TH)
+				{
+					Copy_conn_region(img_buf,out_image);
+					//imshow("out_image", out_image);
+					//imwrite( "out_image.bmp", out_image );
+				
+				}
+				clr_conn_region(img_buf);
+				//imwrite( "img_buf2.bmp", img_buf );
+				//int gg=0;
+				//waitKey();
+
+				
+
+				//å¦‚æœé»‘è‰²å€åŸŸçš„é€£é€šåœ–é¢ç©å°æ–¼æŸå€¼ï¼Œå¯èƒ½æ˜¯å­—å½¢ä¸­é–“éƒ¨ä½ï¼Œè¦å»é™¤
+			}
+
+	    }
+	}	
+
+
+
+	//return out_image;	
+}
+
+#endif
+
+
+
 /**
  * Apply robust text detection algorithm
  * It returns the filtered stroke width image which contains the possible
@@ -861,7 +964,21 @@ RobustTextDetection::RobustTextDetection(RobustTextParam & param, string temp_im
 pair<Mat, Rect> RobustTextDetection::apply( Mat& image ) {
     Mat grey      = preprocessImage( image );
     Mat mser_mask = createMSERMask( grey );
-    
+
+#ifdef MSER_FILTER
+	Mat img_buf;
+	img_buf= Mat( Size(mser_mask.cols,mser_mask.rows), CV_8UC1, Scalar(0));
+	MSER_filter_main(mser_middle_process_img_1,img_buf);	
+	MSER_filter_main(mser_middle_process_img_2,img_buf);
+
+	mser_mask=mser_mask&~img_buf;
+    //imshow("mser_mask", mser_mask);
+	//imwrite( "img_buf.bmp", img_buf );
+//waitKey();
+#endif
+
+
+		
     
     /* Perform canny edge operator to extract the edges */
     Mat edges;
@@ -1082,9 +1199,9 @@ Mat Get_edge_growing_clear_mask(Mat &edge_image,Mat &grad_mag, Mat &grad_dir)
 					shift_y=curr_edge_mag*sin(D3DXToRadian(curr_angle));
 					shift_x=curr_edge_mag*cos(D3DXToRadian(curr_angle));
 /**/
-					//0¡G¤£§ïÅÜ
-					//1¡GÄA­Ë¤è¦V
-					//-1¡G¸õ¹L
+					//0ï¼šä¸æ”¹è®Š
+					//1ï¼šé¡›å€’æ–¹å‘
+					//-1ï¼šè·³é
 					if(flag==1)
 					{
 						shift_y=-shift_y;
