@@ -25,7 +25,7 @@ using namespace cv;
 
 
 
-#define GET_MSER_REGION_DIR_EN
+//#define GET_MSER_REGION_DIR_EN
 
 
 #ifdef GET_MSER_REGION_DIR_EN
@@ -49,8 +49,8 @@ void get_middle_process_img_start(int width,int height)
 	
 }
 
-//pixel值128代表 darker to brighter (MSER-) mser_middle_process_img_1
-//pixel值255代表 brighter to darker (MSER+) mser_middle_process_img_2
+//pixel值128代表 darker to brighter (MSER-)
+//pixel值255代表 brighter to darker (MSER+)
 //如果是0代表沒寫入過，可以直接寫入哪個方向
 //如果大於0代表寫入過，給值64代表重疊
 
@@ -92,34 +92,34 @@ void get_middle_process_img_end(void)
 	mser_middle_process_img_2.release();	
 }
 
-
 //利用MSER產生的中間影像來判斷是否該反向
 //只寫入只有一邊有的，同時兩邊都有的不作用
-//0：不改變
+//0：不改變 依照梯度方向growing
 //1：顛倒方向
-//-1：跳過
+//-1：跳過 原本edge就有一點
 int get_mser_middle_process_flag(Mat &image1,Mat &image2,int curr_x,int curr_y)
 {
-
-	if((point_gray_pixel(image2,curr_x,curr_y)>0)&&(point_gray_pixel(image1,curr_x,curr_y)>0)) 
-		return -1;
-	else if(point_gray_pixel(image2,curr_x,curr_y)>0)
-		return 1;
-	else if(point_gray_pixel(image1,curr_x,curr_y)>0)
-		return 0;
-
-	return 0;
+/**/
+    if((point_gray_pixel(image2,curr_x,curr_y)>0)&&(point_gray_pixel(image1,curr_x,curr_y)>0))
+        return -1;
+    else if(point_gray_pixel(image1,curr_x,curr_y)>0)
+        return 1;
+    //else if(point_gray_pixel(image2,curr_x,curr_y)>0)
+    // return 0;
+    //if(point_gray_pixel(image1,curr_x,curr_y)>0)
+    //return 1;
+    return 0;
 }
 
 
 
-//µ¹¤è¦V¡B°_©lÂI©M±j«×¶}©l°µ°Ï°ìÂX´²
+//給方向、起始點和強度開始做區域擴散
 //input dir edge_level start_xy image
-//dir_flag_inv¥NªíÄA­Ë­ì¨Ó¤è¦V
+//dir_flag_inv代表顛倒原來方向
 /* Convert the angle into predefined 3x3 neighbor locations
-	| 2 | 3 | 4 |
-	| 1 | 0 | 5 |
-	| 8 | 7 | 6 |
+| 2 | 3 | 4 |
+| 1 | 0 | 5 |
+| 8 | 7 | 6 |
 */
 void canny_edge_growing_clear(int dir,int dir_flag_inv,uchar curr_edge_level,Mat &image,int start_x,int start_y)
 {
@@ -137,10 +137,10 @@ void canny_edge_growing_clear(int dir,int dir_flag_inv,uchar curr_edge_level,Mat
 //printf("%d ",edge_level);
 		//edge_level=bound(edge_level,0,3);
 		int curr_x=0,curr_y=0;
-		int true_dir=0;//®Ú¾Úflag§ï¦¨¥¿½T¤è¦V
+		int true_dir=0;//Â®ÃšÂ¾ÃšflagÂ§Ã¯Â¦Â¨Â¥Â¿Â½TÂ¤Ã¨Â¦V
 		true_dir=dir;
 
-		if(dir<0)//¤p©ó0«h¤£³B²z
+		if(dir<0)//Â¤pÂ©Ã³0Â«hÂ¤Â£Â³BÂ²z
 			return;
 
 		if(dir_flag_inv)
@@ -1051,15 +1051,15 @@ int RobustTextDetection::toBin( const float angle, const int neighbors ) {
 }
 
 #ifdef NO_Q_DIR_EN
-
 Mat Get_edge_growing_clear_mask(Mat &edge_image,Mat &grad_mag, Mat &grad_dir)
 {
 	int width=edge_image.cols,height=edge_image.rows;
-	Mat result_clear_mask;
-	result_clear_mask= Mat( Size(width,height), CV_8UC1, Scalar(0));
+	Mat result_clear_mask= edge_image.clone();
+	//result_clear_mask= Mat( Size(width,height), CV_8UC1, Scalar(0));
 
 	float shift_y=0,shift_x=0;
 	float curr_edge_mag=0,curr_angle=0;
+	const float max_mag=5;
 	for (int y = 0; y < edge_image.rows; y++) 
 	{
 	    for(int x = 0; x < edge_image.cols; x++) 
@@ -1067,13 +1067,37 @@ Mat Get_edge_growing_clear_mask(Mat &edge_image,Mat &grad_mag, Mat &grad_dir)
 				//if((x==208)&&(y==103))
 				//if((x==205)&&(y==146))
 					//int ggg=0;
-		
+				int flag=get_mser_middle_process_flag(mser_middle_process_img_1,mser_middle_process_img_2,x,y);
+				
 				if(point_gray_pixel(edge_image,x,y))
 				{
-					curr_edge_mag=point_gray_pixel_F(grad_mag,x,y)/50;//5.0;
+					curr_edge_mag=(1.0-point_gray_pixel_F(grad_mag,x,y)/360.0)*max_mag;//5.0;
+					if(curr_edge_mag<1)
+						curr_edge_mag=1;
+					if(curr_edge_mag>max_mag)
+						curr_edge_mag=max_mag;
 					curr_angle=point_gray_pixel_F(grad_dir,x,y);
 					shift_y=curr_edge_mag*sin(D3DXToRadian(curr_angle));
 					shift_x=curr_edge_mag*cos(D3DXToRadian(curr_angle));
+/**/
+					//0¡G¤£§ïÅÜ
+					//1¡GÄA­Ë¤è¦V
+					//-1¡G¸õ¹L
+					if(flag==1)
+					{
+						shift_y=-shift_y;
+						shift_x=-shift_x;
+					}else if(flag==-1)
+					{
+						continue;
+					}else{//(flag==0)
+
+					}
+
+
+
+
+					
 					line(result_clear_mask,Point(x,y),Point(x+shift_x,y+shift_y),CV_RGB(255,255,255),1,CV_AA,0);
 					//circle( result_clear_mask, Point(x+shift_x,y+shift_y), 2, Scalar( 255, 0, 0 ), 1 );
 				}
@@ -1137,6 +1161,7 @@ Mat RobustTextDetection::growEdges(Mat& image, Mat& edges ) {
 #ifdef NO_Q_DIR_EN
 	Mat result_clear_mask=Get_edge_growing_clear_mask(edges,grad_mag, grad_dir);
 	imwrite( "zzz_dir_image.bmp", result_clear_mask );
+	get_middle_process_img_end();	
 	return result_clear_mask;
 #endif
 
